@@ -140,3 +140,6 @@ aws_data/
 
 # Vscode
 .vscode/
+*/.eslintcache
+
+*/*.pem

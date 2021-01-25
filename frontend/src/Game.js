@@ -692,7 +692,7 @@ class Player extends React.Component {
 						<form onSubmit={this.handleNameSubmit.bind(this)}>
 							<input value={this.state.player_name} onChange={this.handleNameChange.bind(this)}/>
 						</form> :
-						<div className="player_name">{this.props.player_name}</div>
+						<div className="player_name text">{this.props.player_name}</div>
 					}
 				</div>
 			</div>

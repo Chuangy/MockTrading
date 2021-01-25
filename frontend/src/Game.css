@@ -116,9 +116,15 @@
     cursor: pointer;
 }
 
-.player_info .player_name {
-    background-color: rgb(40, 40, 40)
+.player_info .player_name, .player_name_changer .player_name {
+    background-color: rgb(40, 40, 40);
+    height: 32px;
+    line-height: 32px;
 }
+.player_name_changer .player_name:hover {
+    background-color: rgb(233, 74, 55);
+}
+
 .player_info  .player_name:hover {
     background-color: rgb(195, 62, 46);
     cursor: pointer;
