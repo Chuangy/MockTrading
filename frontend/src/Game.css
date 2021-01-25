@@ -1,0 +1,390 @@
+.game_wrapper {
+    height: 100vh;
+    width: 100%;
+    overflow: hidden;
+}
+
+.left_bar {
+    width: 10%;
+    height: 100%;
+    float: left;
+    background-color: rgb(30, 30, 30);
+    color: white;
+    transition: 0.5s;
+}
+
+.right_bar {
+    position: fixed;
+    right: 0;
+    width: 10%;
+    height: 100%;
+    float: right;
+    background-color: rgb(30, 30, 30);
+    color: white;
+    transition: 0.5s;
+}
+
+.left_bar:hover, 
+.right_bar:hover {
+    width: 12%;
+}
+
+.left_bar:hover ~ .tool_bar {
+    width: 16%;
+}
+
+.tool_bar {
+    width: 18%;
+    height: 100%;
+    background-color: rgb(204, 204, 204);
+    float: left;
+    transition: 0.5s;
+    border-right: 1px solid rgb(30, 30, 30);
+}
+
+.tool_bar:hover {
+    background-color: rgb(222, 222, 222);
+}
+
+.main_canvas {
+    width: 60%;
+    height: 100%;
+    float: left;
+    transition: 0.5s;
+}
+
+.lobby, .room, .player {
+    width: 100%;
+    height: 30%;
+    position: relative;
+}
+
+.curent_room {
+    width: 100%;
+    height: 100%;
+    position: relative;
+}
+
+.lobby:hover, .room:hover, .player:hover {
+    background-color: rgb(40, 40, 40);
+}
+
+.label {
+    padding-top: 10px;
+    padding-bottom: 20px;
+    color: white;
+    font-weight: 700;
+    font-size: large;
+}
+
+.row {
+    width: 100%;
+    height: 32px;
+    line-height: 32px;
+}
+
+.row:hover {
+    background-color: rgb(0, 122, 204);
+    cursor: pointer;
+}
+
+.room_name {
+    width: 70%;
+    float: left;
+}
+
+.button {
+    width: 30%;
+    float: right;
+}
+
+.text {
+    height: 100%;
+    vertical-align: middle;
+}
+
+.button:hover {
+    background-color: rgb(195, 62, 46);
+}
+
+.player_name {
+    width: 100%;
+}
+
+.player_name:hover {
+    background-color: rgb(195, 62, 46);
+    cursor: pointer;
+}
+
+.player_info .player_name {
+    background-color: rgb(40, 40, 40)
+}
+.player_info  .player_name:hover {
+    background-color: rgb(195, 62, 46);
+    cursor: pointer;
+}
+
+.start_button {
+    position: absolute;
+    bottom: 0;
+    width: 100%;
+    height: 50px;
+    line-height: 50px;
+    font-size: large;
+    background-color: rgb(195, 62, 46);
+    cursor: pointer;
+}
+
+.start_button:hover {
+    background-color: rgb(0, 122, 204);
+}
+
+.started {
+    position: absolute;
+    bottom: 0;
+    width: 100%;
+    height: 50px;
+    line-height: 50px;
+    font-size: large;
+    background-color: rgb(0, 122, 204);
+}
+
+.player_cards {
+    width: 100%;
+    height: 32px;
+}
+
+.card_display {
+    width: 100%;
+    float: left;
+    box-sizing: border-box;
+    margin-left: 50px;
+    margin-right: auto;
+}
+
+.card {
+    width: 50px;
+    float: left;
+}
+
+.card:hover {
+    background-color: rgb(195, 62, 46);
+}
+
+.card_number, .card_suit {
+    width: 50%;
+    float: left;
+}
+
+.player_name.yourself {
+    background-color: rgb(0, 122, 204);
+}
+.revealed {
+    background-color: rgb(50, 145, 113);
+}
+
+.player_name_changer input {
+    color: black;
+    text-align: center;
+}
+
+.new_instrument, .new_order_form, .positions_wrapper  {
+    width: 100%;
+    padding: 50px;
+}
+
+.book_wrapper {
+    width: 70%;
+    height: 100%;
+    padding: 50px;
+    float: left;
+    overflow-y: auto;
+}
+
+.trade_wrapper {
+    width: 30%;
+    height: 100%;
+    padding: 50px;
+    float: left;
+    overflow-y: auto;
+}
+
+.new_instrument_button {
+    width : 50%;
+    background-color: rgb(195, 62, 46);
+    color: white;
+    margin : 0 auto;
+    cursor: pointer;
+    height: 32px;
+    line-height: 32px;
+    vertical-align: middle;
+}
+
+.new_instrument_button:hover {
+    background-color: rgb(233, 74, 55);
+}
+
+input.room_name.text {
+    background-color: rgb(30, 30, 30);
+    color: white;
+    text-align: center;
+}
+
+.button_row {
+    width : 70%;
+    color: white;
+    margin : 0 auto;
+    cursor: pointer;
+    height: 32px;
+    line-height: 32px;
+    vertical-align: middle;
+}
+
+.bid_button {
+    float: left;
+    width: 45%;
+    height: 100%;
+    background-color: rgb(50, 145, 113);
+}
+
+.bid_button:hover {
+    background-color: rgb(63, 183, 142);
+}
+
+.ask_button {
+    float: right;
+    width: 45%;
+    height: 100%;
+    background-color: rgb(195, 62, 46);
+}
+
+.ask_button:hover {
+    background-color: rgb(233, 74, 55);
+}
+
+.position_row, .book_row, .trades_row {
+    width: 100%;
+    height: 32px;
+    line-height: 32px;
+    text-align: center;
+    vertical-align: middle;
+}
+
+.position_row.last {
+    border-bottom: 1px solid rgb(30, 30, 30);
+}
+
+.position_row.heading, .book .book_row.heading, .trades_row.heading {
+    border-top: 1px solid rgb(30, 30, 30);
+    border-bottom: 1px solid rgb(30, 30, 30);
+    background-color: rgb(40, 40, 40);
+    color: white;
+}
+
+.position_row:hover, .book  .book_row:hover, .trade_wrapper .trades_row:hover {
+    background-color: rgb(0, 122, 204);
+    color: white;
+}
+
+.position_row.heading:hover, .book .book_row.heading:hover, .trades_row.heading:hover {
+    background-color: rgb(195, 62, 46);
+    color: white;
+}
+
+.position_instrument {
+    width: 40%;
+    float: left;
+}
+
+.position_size, .position_price {
+    width: 30%;
+    float: left;
+}
+
+.book_price, .book_size, .book_order {
+    width: 33.3%;
+    float: left;
+}
+
+.book_row.heading .book_order {
+    color: white;
+}
+
+.book_order.active {
+    color: rgb(195, 62, 46);
+    cursor: pointer;
+}
+
+.book_order.active:hover {
+    background-color: rgb(195, 62, 46);
+    color: white;
+}
+
+.asks, .bids {
+    width: 50%;
+    float: left;
+}
+
+.asks .book_row {
+    background-color: rgba(195, 62, 46, 0.1);
+}
+.bids .book_row {
+    background-color: rgba(50, 145, 113, 0.1);
+}
+
+.option.selected:hover {
+    background-color:rgb(233, 74, 55);
+}
+
+.option.selected {
+    background-color:rgb(195, 62, 46);
+}
+.option.unselected {
+    background-color: rgb(0, 122, 204);
+}
+
+.option.unselected:hover {
+    background-color: rgb(0, 144, 242);
+}
+
+.option {
+    color: white;
+    cursor: pointer;
+    float: left;
+}
+
+.book {
+    float: left;
+    padding: 10px;
+    min-width: 33.3%;
+}
+
+.trades_instrument {
+    width: 40%;
+    float: left;
+}
+.trades_price, .trades_size {
+    width: 30%;
+    float: left;
+}
+
+.trades_row.bid {
+    background-color: rgba(50, 145, 113, 0.1);
+}
+
+.trades_row.ask {
+    background-color: rgba(195, 62, 46, 0.1);
+}
+
+.loading_wrapper {
+    width: 50%;
+    margin: auto auto;
+}
+
+.game_wrapper {
+    display: flex;
+}
+
+h2 {
+    padding-top: 50px;
+}
