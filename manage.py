@@ -8,6 +8,7 @@ import backend.server as server
 
 def main(argv):
     help_string = '''manage.py 
+        -H [--host] <host (localhost)>
         -p [--port] <port (8888)> 
         -d [--debug]'''
     try:
@@ -20,6 +21,7 @@ def main(argv):
     # Default values
     port = 8887  # Port to run server on
     debug = False
+    host = 'localhost'
 
     for opt, arg in opts:
         if opt == '-h':
@@ -27,15 +29,17 @@ def main(argv):
             return 0
         elif opt in ('-p', '--port'):
             port = str(arg)
+        elif opt in ('-H', '--host'):
+            host = str(arg)
         elif opt in ('-d', '--debug'):
             debug = True
 
     print('-' * 60)
-    print(f'Running on port {port}')
+    print(f'Running on port {host}:{port}')
     print(f'Debug mode is {debug}')
     print('-' * 60)
 
-    asyncio.run(server.main(port=port))
+    asyncio.run(server.main(port=port, host=host))
 
     return 0
 

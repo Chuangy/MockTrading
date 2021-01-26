@@ -236,16 +236,16 @@ class MatchingEngine:
                     else:
                         pass
 
-    async def run(self, port='8887'):
+    async def run(self, port='8887', host='localhost'):
         util.print_core(f'Starting server on port {port}')
-        await websockets.server.serve(self.client_handler, 'localhost', port)
+        await websockets.server.serve(self.client_handler, host, port)
 
         consumer = asyncio.create_task(self.consume(self._q))
         await asyncio.gather(consumer)
 
-async def main(port='8887'):
+async def main(port='8887', host='localhost'):
     server = MatchingEngine()
-    await server.run(port=port)
+    await server.run(port=port, host=host)
 
 class Lobby:
     def __init__(self):
