@@ -452,13 +452,13 @@ class Positions extends React.Component {
 									Size
 								</div>
 								<div className="position_price">
-									Average Price
+									Avg. Price
 								</div>
 							</div>
-				{this.props.instruments.map((i, index) => {
+				{['CASH', ...this.props.instruments].map((i, index) => {
 					return (
 						this.props.positions[i] ?
-							<div className={`position_row ${index === n_instruments - 1 ? "last" : ""}`} key={i}>
+							<div className={`position_row ${index === n_instruments ? "last" : ""}`} key={i}>
 								<div className="position_instrument">
 									{i}
 								</div>

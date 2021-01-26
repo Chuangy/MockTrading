@@ -82,7 +82,7 @@ export class Orderbook {
     this.orders[instrument][order_id] = {
       active: data.status === 'active' ? true : false,
       price: data.price,
-      size: data.size,
+      size: data.remaining_size,
       direction: data.direction,
       order_id: data.order_id,
     };

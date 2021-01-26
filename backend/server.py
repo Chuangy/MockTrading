@@ -271,6 +271,12 @@ class Lobby:
     async def new_player(self, player_name, ws):
         if player_name in self._players.keys():
             util.print_core('Player already exists')
+            await self._players[player_name].send_message(
+                {
+                    'type' : 'LoginRequest',
+                    'data' : player_name
+                }
+            )
             return 0
         else:
             util.print_core(f'Creating player: {player_name}')
@@ -449,12 +455,14 @@ class Room:
         prev_size = self._positions[player_name][instrument_name]['size']
         prev_average = self._positions[player_name][instrument_name]['average_price']
         if ask_bid == 'bid':
+            self._positions[player_name]['CASH']['size'] -= price * size
             self._positions[player_name][instrument_name]['size'] += size
             if size + prev_size == 0:
                 self._positions[player_name][instrument_name]['average_price'] = 0
             else:
                 self._positions[player_name][instrument_name]['average_price'] = ((prev_size * prev_average) + (size * price)) / (size + prev_size)
         elif ask_bid == 'ask':
+            self._positions[player_name]['CASH']['size'] += price * size
             self._positions[player_name][instrument_name]['size'] -= size
             if prev_size - size == 0:
                 self._positions[player_name][instrument_name]['average_price'] = 0
@@ -502,6 +510,10 @@ class Room:
             })
 
             self._positions[player_name] = {}
+            self._positions[player_name]['CASH'] = {
+                'size' : 0,
+                'average_price' : 1
+            }
         
         self._settlement_value = settlement_value
         self._status = 'started'
@@ -521,7 +533,7 @@ class Room:
         util.print_core(f'Revealing cards {self._revealed_cards}')
 
     async def init_underlying(self):
-        name = 'SUM-UNDERLYING'
+        name = 'SUM'
         util.print_core(f'The instrument, {name} has been initialised!')
         self._underlying = {
             'type' : 'underlying',

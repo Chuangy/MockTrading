@@ -53,9 +53,28 @@
     transition: 0.5s;
 }
 
-.lobby, .room, .player {
+.lobby, .room {
     width: 100%;
-    height: 30%;
+    height: 40%;
+    overflow-y: auto;
+    position: relative;
+}
+
+*::-webkit-scrollbar {
+    width: 3px;
+}
+
+*::-webkit-scrollbar-track {
+    background-color: rgb(30, 30, 30)
+}
+
+*::-webkit-scrollbar-thumb {
+    background-color: rgb(233, 74, 55);
+}
+
+.player {
+    width: 100%;
+    height: 20%;
     position: relative;
 }
 
@@ -161,11 +180,8 @@
 }
 
 .card_display {
-    width: 100%;
-    float: left;
-    box-sizing: border-box;
-    margin-left: 50px;
-    margin-right: auto;
+    width: 80%;
+    margin: 0 auto;
 }
 
 .card {
@@ -192,6 +208,7 @@
 .player_name_changer input {
     color: black;
     text-align: center;
+    width: 50%;
 }
 
 .new_instrument, .new_order_form, .positions_wrapper  {
@@ -274,6 +291,7 @@ input.room_name.text {
     line-height: 32px;
     text-align: center;
     vertical-align: middle;
+    overflow: hidden;
 }
 
 .position_row.last {
@@ -298,12 +316,17 @@ input.room_name.text {
 }
 
 .position_instrument {
-    width: 40%;
+    width: 35%;
     float: left;
 }
 
-.position_size, .position_price {
+.position_size {
     width: 30%;
+    float: left;
+}
+
+.position_price {
+    width: 35%;
     float: left;
 }
 

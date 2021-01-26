@@ -107,16 +107,24 @@ class Order(abc.ABC):
 
         if price is None:
             util.print_core(f'Filled {size} at a price {self._price} ({self._player._player_name}) (maker)')
+            await self._room.new_trade(self._instrument, self._price, size, self._direction)
         else:
             util.print_core(f'Filled {size} at a price {price} ({self._player._player_name}) (taker)')
-            await self._room.new_trade(self._instrument, price, size, self._direction)
 
-        await self._room.update_positions(
-            self._player._player_name, 
-            self._instrument, 
-            self._price, size, 
-            self._direction
-        )
+        if price is None:
+            await self._room.update_positions(
+                self._player._player_name, 
+                self._instrument, 
+                self._price, size,
+                self._direction
+            )
+        else:
+            await self._room.update_positions(
+                self._player._player_name, 
+                self._instrument, 
+                price, size,
+                self._direction
+            )
 
     async def cancel_order(self):
         self._status = 'cancelled'
