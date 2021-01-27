@@ -2,6 +2,7 @@
 
 import asyncio
 import getopt
+import os
 import sys
 
 import backend.server as server
@@ -19,9 +20,14 @@ def main(argv):
         return 1
 
     # Default values
-    port = 8887  # Port to run server on
+    try:
+        port = os.environ['PORT']  # Port to run server on
+        host = os.environ['PRIVATE_HOST']
+    except:
+        print('Failed to fetch environmental variables...')
+        port = 8887
+        host = 'localhost'
     debug = False
-    host = 'localhost'
 
     for opt, arg in opts:
         if opt == '-h':

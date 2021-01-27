@@ -48,7 +48,12 @@ export class Game extends React.Component {
 	}
 	
 	connect = () => {
-		let ws = new WebSocket("ws://localhost:8887");
+		console.log(process.env)
+		const public_host = process.env.REACT_APP_PUBLIC_HOST ? process.env.REACT_APP_PUBLIC_HOST : "localhost";
+		const port = process.env.REACT_APP_PORT ? process.env.REACT_APP_PORT : "8887"
+		const ws_uri = `ws://${public_host}:${port}`
+		console.log(`Attempting to connect to ${ws_uri}`)
+		let ws = new WebSocket(ws_uri);
 		ws.onopen = () => {
 			console.log("Conncted to the websocket!");
 			this.setState({ ws: ws });
