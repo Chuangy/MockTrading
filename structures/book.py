@@ -306,6 +306,7 @@ class OrderBook(abc.ABC):
 
         self.tick_size = tick_size  # The smallest increment
         self.last_order_id = 0
+        self.orders = []
 
     def generate_id(self):
         self.last_order_id += 1
@@ -389,7 +390,12 @@ class OrderBook(abc.ABC):
         self.asks = []
 
         self.bb = None  # Best Bid
-        self.ba = None  # Best Ask        
+        self.ba = None  # Best Ask
+
+    async def send_orders(self, player_name):
+        for o in self.orders:
+            if o.get_player_name() == player_name:
+                await o.send_update()
 
     async def new_order(self, order):
         if isinstance(order, dict):
@@ -405,6 +411,7 @@ class OrderBook(abc.ABC):
             await o.send_update()
             await self.new_order(o)
         elif isinstance(order, Order):
+            self.orders.append(order)
             price = order.get_price()
             ask_bid = order.get_direction()
             if price <= 0:

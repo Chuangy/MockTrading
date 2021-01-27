@@ -208,7 +208,8 @@
 .player_name_changer input {
     color: black;
     text-align: center;
-    width: 50%;
+    width: 60%;
+    margin: 0 auto;
 }
 
 .new_instrument, .new_order_form, .positions_wrapper  {

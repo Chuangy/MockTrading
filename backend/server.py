@@ -45,6 +45,7 @@ class MatchingEngine:
                 
         except Exception:
             traceback.print_exc()
+            print(message)
             util.print_core('Client unexpectedly disconnected!')
             self._connected_users.remove(websocket)
 
@@ -110,12 +111,14 @@ class MatchingEngine:
                     'status' : 'Failed to delete room - does not exist.'
                 }
         elif msg_type == 'NewPlayer':
-            c = await self._lobby.new_player(msg_json['data']['name'], ws)
+            name = msg_json['data']['name']
+            password = msg_json['data']['password']
+            c = await self._lobby.new_player(name, password, ws)
             if c:
                 response = [
                     {
                         'type' : 'Info',
-                        'status' : 'New player successfully joined game'
+                        'status' : f'{name} successfully joined game'
                     },
                     {
                         'type' : 'PlayerUpdate',
@@ -125,14 +128,15 @@ class MatchingEngine:
             else:
                 response = {
                     'type' : 'Info',
-                    'status' : 'Failed to create new player - duplicate name'
+                    'status' : 'Failed to login - incorrect password'
                 }
         elif msg_type == 'DeletePlayer':
-            if self._lobby.delete_player(msg_json['data']['name']):
+            name = msg_json['data']['name']
+            if self._lobby.delete_player(name):
                 response = [
                     {
                         'type' : 'Info',
-                        'status' : 'Deleted player'
+                        'status' : f'Deleted player {name}'
                     },
                     {
                         'type' : 'PlayerUpdate',
@@ -148,9 +152,9 @@ class MatchingEngine:
         elif msg_type == 'JoinRoom':
             player = msg_json['data']['player']
             room = msg_json['data']['room']
-            c1 = await self._lobby.get_player(player).join_room(room)
-            c2 = await self._lobby.get_room(room).join(self._lobby.get_player(player))
-            if (c1 and c2):
+            c1 = await self._lobby.get_room(room).join(self._lobby.get_player(player))
+            if (c1):
+                await self._lobby.get_player(player).join_room(room)
                 response = {
                     'type' : 'Info',
                     'status' : f'{player} has joined {room}'
@@ -268,25 +272,29 @@ class Lobby:
         else:
             return 0
 
-    async def new_player(self, player_name, ws):
+    async def new_player(self, player_name, password, ws):
         if player_name in self._players.keys():
-            util.print_core('Player already exists')
-            await self._players[player_name].send_message(
-                {
-                    'type' : 'LoginRequest',
+            util.print_core('Player already exists - attempting login')
+            if self._players[player_name]._password == password:
+                self._players[player_name].update_ws(ws)
+                await self._players[player_name].send_message({
+                    'type' : 'PlayerDetails',
                     'data' : player_name
-                }
-            )
-            return 0
+                })
+                util.print_core('Login success!')
+                return 1
+            else:
+                return 0
         else:
             util.print_core(f'Creating player: {player_name}')
-            self._players[player_name] = Player(player_name, ws)
+            self._players[player_name] = Player(player_name, password, ws)
             await self._players[player_name].send_message(
                 {
                     'type' : 'PlayerDetails',
                     'data' : player_name
                 }
             )
+            util.print_core('New player creation success!')
             return 1
 
     def delete_player(self, player_name):
@@ -313,8 +321,9 @@ class Lobby:
             return self._players[key]
 
 class Player:
-    def __init__(self, name, ws):
+    def __init__(self, name, password, ws):
         self._player_name = name
+        self._password = password
         self._ws = ws
         self._player_id = util.hash_string(name)
         self._rooms = set()
@@ -342,6 +351,9 @@ class Player:
             })
             util.print_core(f'{self._player_name} has joined {room_name}')
             return 1
+
+    def update_ws(self, new_ws):
+        self._ws = new_ws
 
     def leave_room(self, room_name):
         if room_name in self._rooms:
@@ -413,9 +425,10 @@ class Room:
     async def join(self, player: Player):
         person_name = player._player_name
         if self._status != 'waiting' and person_name not in self._players.keys():
+            util.print_core(f'{person_name} could not join {self._name} (already started)')
             return 0
-        if person_name in self._players.keys():
-            util.print_core(f'{person_name} is already in {self._name}')
+        elif self._status != 'waiting' and person_name in self._players.keys():
+            util.print_core(f'{person_name} is rejoining in {self._name} (started)')
             await player.send_message({
                 'type' : 'RoomPlayersUpdate',
                 'data' : {
@@ -429,7 +442,12 @@ class Room:
                     'cards' : player.get_cards(self._name)
                 }
             })
-            return 0
+            await self.send_books()
+            await self.send_instruments()
+            await self.send_positions()
+            await self.send_trades()
+            await self.send_orders(person_name)
+            return 1
         else:
             self._players[person_name] = player
             util.print_core(f'{person_name} has joined {self._name}')
@@ -443,9 +461,12 @@ class Room:
             return 1
 
     def leave(self, person_name):
-        if person_name in self._players.keys():
+        if self._status == 'waiting' and person_name in self._players.keys():
             del self._players[person_name]
             util.print_core(f'{person_name} has left {self._name}')
+            return 1
+        elif self._status == 'started' and person_name in self._players.keys():
+            util.print_core(f'The game has already started but {person_name} has left {self._name}')
             return 1
         else:
             return 0
@@ -630,6 +651,11 @@ class Room:
     async def send_books(self):
         for _, book in self._books.items():
             await self.tell_room(book.as_update())
+
+
+    async def send_orders(self, player_name):
+        for _, book in self._books.items():
+            await book.send_orders(player_name)
 
     async def send_trades(self):
         await self.tell_room({

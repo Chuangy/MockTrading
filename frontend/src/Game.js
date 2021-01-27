@@ -52,10 +52,6 @@ export class Game extends React.Component {
 
 			ws.send("")
 			ws.send(JSON.stringify({type: "NewRoom", data: {name: 'TestRoom'}}))
-			ws.send("")
-			ws.send(JSON.stringify({
-				type: "NewPlayer", data: {name: 'unnamed_player'}
-			}))
 		};
 
 		ws.onmessage = (event) => {
@@ -667,18 +663,27 @@ class Player extends React.Component {
 	constructor(props) {
 		super(props);
 		this.state = {
-			player_name: "Enter your name..."
+			player_name: "Username",
+			password: "Password"
 		}
 	}
 
 	handleNameChange(e) {
 		this.setState({player_name: e.target.value});
 	}
+	
+	handlePasswordChange(e) {
+		this.setState({password: e.target.value});
+	}
 
-	handleNameSubmit(e) {
+	handleSubmit(e) {
 		this.props.ws.send("");
 		this.props.ws.send(JSON.stringify({
-			type: "NewPlayer", data: {name: this.state.player_name}
+			type: "NewPlayer", 
+			data: {
+				name: this.state.player_name,
+				password: this.state.password
+			}
 		}));
 		e.preventDefault();
 	}
@@ -689,8 +694,10 @@ class Player extends React.Component {
 				<div className="label">Player details</div>
 				<div className="player_name_changer">
 					{this.props.player_name === "no_name" ? 
-						<form onSubmit={this.handleNameSubmit.bind(this)}>
+						<form onSubmit={this.handleSubmit.bind(this)}>
 							<input value={this.state.player_name} onChange={this.handleNameChange.bind(this)}/>
+							<input value={this.state.password} onChange={this.handlePasswordChange.bind(this)}/>
+							<input type="submit" style={{position: "absolute", left: "-9999px"}}/>
 						</form> :
 						<div className="player_name text">{this.props.player_name}</div>
 					}
