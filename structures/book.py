@@ -34,8 +34,8 @@ class Order(abc.ABC):
         self._order_id = order_id
         self._player = player
         self._room = room
-        self._price = price
-        self._size = size
+        self._price = int(price)
+        self._size = int(size)
         self._remaining_size = size
         self._instrument = instrument
         self._status = 'active'

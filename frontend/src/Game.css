@@ -311,6 +311,10 @@ input.room_name.text {
     color: white;
 }
 
+.book  .book_row:hover > .book_order {
+    color: white;
+}
+
 .position_row.heading:hover, .book .book_row.heading:hover, .trades_row.heading:hover {
     background-color: rgb(195, 62, 46);
     color: white;
@@ -334,6 +338,11 @@ input.room_name.text {
 .book_price, .book_size, .book_order {
     width: 33.3%;
     float: left;
+}
+
+.book_size:hover {
+    background-color: rgb(50, 145, 113);
+    cursor: pointer;
 }
 
 .book_row.heading .book_order {

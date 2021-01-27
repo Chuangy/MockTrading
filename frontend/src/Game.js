@@ -34,6 +34,9 @@ export class Game extends React.Component {
 			positions: [],
 			orders: [],
 			trades: [],
+			order_instrument: null,
+			order_price: null,
+			order_size: null,
 		}
 	}
 
@@ -134,6 +137,18 @@ export class Game extends React.Component {
 		};
 	};
 
+	handleOrderValueChange(changedValues, allValues) {
+		this.setState({...changedValues});
+	}
+
+	handleQuickSelect(instrument, price, size) {
+		this.setState({
+			order_instrument: instrument,
+			order_price: price,
+			order_size: size
+		})
+	}
+
 	handleNewRoom(r) {
 		console.log(`Creating new room ${r}`)
 		this.state.ws.send("")
@@ -208,7 +223,11 @@ export class Game extends React.Component {
 		}));
 	}
 
-	handleNewOrder(instrument, price, size, direction) {
+	handleNewOrder(direction) {
+		const instrument = this.state.order_instrument;
+		const price = this.state.order_price;
+		const size = this.state.order_size;
+
 		console.log(`Sending new order for ${instrument} ${price} ${size} ${direction}`)
 		this.state.ws.send("")
 		this.state.ws.send(JSON.stringify({
@@ -302,6 +321,10 @@ export class Game extends React.Component {
 						<NewOrders
 							instruments={this.state.instruments}
 							onNewOrder={this.handleNewOrder.bind(this)}
+							onOrderValueChange={this.handleOrderValueChange.bind(this)}
+							order_instrument={this.state.order_instrument}
+							order_price={this.state.order_price}
+							order_size={this.state.order_size}
 						/>
 						<Positions
 							instruments={this.state.instruments}
@@ -318,6 +341,7 @@ export class Game extends React.Component {
 							orders={orders}
 							instruments={this.state.instruments}
 							onCancelOrder={this.handleCancelOrder.bind(this)}
+							onQuickSelect={this.handleQuickSelect.bind(this)}
 						/>
 						<Trades
 							trades={trades}
@@ -378,9 +402,6 @@ class NewOrders extends React.Component {
 			direction: "bid",
 		}
 	}
-	handleValueChange(changedValues, allValues) {
-		this.setState({...changedValues});
-	}
 
 	render() {
 		const instruments = this.props.instruments;
@@ -394,33 +415,37 @@ class NewOrders extends React.Component {
 					labelAlign="right"
 					layout="horizontal"
 					size="default"
-					onValuesChange={this.handleValueChange.bind(this)}
-					initialValues={this.state}
+					onValuesChange={this.props.onOrderValueChange.bind(this)}
+					fields={[
+						{name: "order_instrument", value: this.props.order_instrument},
+						{name: "order_price", value: this.props.order_price},
+						{name: "order_size", value: this.props.order_size}
+					]}
 				>
-					<Form.Item label="Instrument" name="instrument">
+					<Form.Item label="Instrument" name="order_instrument">
 						<Select style={{width: width}}>
 							{instruments.map((i) => {
 								return <Select.Option value={i} key={i}>{i}</Select.Option>
 							})}
 						</Select>
 					</Form.Item>
-					<Form.Item label="Price" name="price">
+					<Form.Item label="Price" name="order_price">
 						<InputNumber min={0} precision={0} style={{width: width, textAlign: "center"}}/>
 					</Form.Item>
-					<Form.Item label="Size" name="size">
+					<Form.Item label="Size" name="order_size">
 						<InputNumber min={0} precision={0} style={{width: width, textAlign: "center"}}/>
 					</Form.Item>
 				</Form>
 				<div className="button_row">
 					<div 
 						className="bid_button" 
-						onClick={this.props.onNewOrder.bind(this, this.state.instrument, this.state.price, this.state.size, "bid")}
+						onClick={this.props.onNewOrder.bind(this, "bid")}
 					>
 						Bid
 					</div>
 					<div 
 						className="ask_button"
-						onClick={this.props.onNewOrder.bind(this, this.state.instrument, this.state.price, this.state.size, "ask")}
+						onClick={this.props.onNewOrder.bind(this, "ask")}
 					>
 						Ask
 					</div>
@@ -579,6 +604,7 @@ class Books extends React.Component {
 							width={`${100 / active_instruments.length}%`}
 							key={i}
 							onCancelOrder={this.props.onCancelOrder.bind(this)}
+							onQuickSelect={this.props.onQuickSelect.bind(this)}
 						/>
 					)
 				})}
@@ -624,7 +650,12 @@ class Book extends React.Component {
 									</div> :
 									<div className="book_order">-</div>
 								}
-								<div className="book_size">{bids[price]}</div>
+								<div 
+									className="book_size"
+									onClick={this.props.onQuickSelect.bind(this, this.props.instrument, price, bids[price])}
+								>
+									{bids[price]}
+								</div>
 								<div className="book_price">{price}</div>
 							</div>
 						)
@@ -640,7 +671,12 @@ class Book extends React.Component {
 						return (
 							<div className="book_row" key={price}>
 								<div className="book_price">{price}</div>
-								<div className="book_size">{asks[price]}</div>
+								<div 
+									className="book_size"
+									onClick={this.props.onQuickSelect.bind(this, this.props.instrument, price, asks[price])}
+								>
+									{asks[price]}
+								</div>
 								{orders[price] ?
 									<div 
 										className="book_order active"
