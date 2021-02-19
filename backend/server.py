@@ -169,7 +169,7 @@ class MatchingEngine:
             room = msg_json['data']['room']
             if (
                 self._lobby.get_player(player).leave_room(room) and
-                self._lobby.get_room(room).leave(player)
+                await self._lobby.get_room(room).leave(player)
             ):
                 response = {
                     'type' : 'Info',
@@ -217,6 +217,10 @@ class MatchingEngine:
             direction = msg_json['data']['direction']
             price = msg_json['data']['price']
             await room.cancel_order(instrument, player_name, int(price), direction)
+        elif msg_type == 'SettleGame':
+            room = self._lobby.get_room(msg_json['data']['room'])
+            await room.settle_game()
+            
         else:
             print(json.dumps(msg_json, indent=4))
             
@@ -460,10 +464,17 @@ class Room:
             })
             return 1
 
-    def leave(self, person_name):
+    async def leave(self, person_name):
         if self._status == 'waiting' and person_name in self._players.keys():
             del self._players[person_name]
             util.print_core(f'{person_name} has left {self._name}')
+            await self.tell_room({
+                'type' : 'RoomPlayersUpdate',
+                'data' : {
+                    'room' : self._name,
+                    'players' : list(self._players.keys())
+                }
+            })
             return 1
         elif self._status == 'started' and person_name in self._players.keys():
             util.print_core(f'The game has already started but {person_name} has left {self._name}')
@@ -540,6 +551,34 @@ class Room:
         self._status = 'started'
         util.print_core(f'The game has initialised with settlement value {settlement_value}!')
         await self.init_underlying()
+
+    def get_value(self, symbol):
+        if symbol == 'SUM':
+            return self._settlement_value
+        elif symbol == 'CASH':
+            return 1
+        else:
+            strike, option_type = symbol.split('-')
+            if option_type == 'CALL':
+                v = max(0, self._settlement_value - int(strike))
+                util.print_core(f'SUM:{self._settlement_value} {strike}-CALL: {v}')
+                return v
+            elif option_type == 'PUT':
+                return max(0, int(strike) - self._settlement_value)
+            else:
+                util.print_core(f'Unknown symbol: {symbol}')
+
+    async def settle_game(self):
+        pnl = {}
+        for player_name in self._players.keys():
+            pnl[player_name] = 0
+            for symbol, details in self._positions[player_name].items():
+                pnl[player_name] += details['size'] * self.get_value(symbol)
+        self._status = 'settled'
+        await self.tell_room({
+            'type' : 'Settlement',
+            'data' : pnl
+        })
 
     async def reveal_card(self, player_name, card):
         if player_name in self._revealed_cards.keys():

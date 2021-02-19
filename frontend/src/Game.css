@@ -40,6 +40,7 @@
     float: left;
     transition: 0.5s;
     border-right: 1px solid rgb(30, 30, 30);
+    overflow-y: auto;
 }
 
 .tool_bar:hover {
@@ -149,15 +150,18 @@
     cursor: pointer;
 }
 
-.start_button {
+.game_button {
     position: absolute;
     bottom: 0;
     width: 100%;
     height: 50px;
     line-height: 50px;
     font-size: large;
-    background-color: rgb(195, 62, 46);
     cursor: pointer;
+}
+
+.start_button {
+    background-color: rgb(195, 62, 46);
 }
 
 .start_button:hover {
@@ -165,13 +169,15 @@
 }
 
 .started {
-    position: absolute;
-    bottom: 0;
-    width: 100%;
-    height: 50px;
-    line-height: 50px;
-    font-size: large;
     background-color: rgb(0, 122, 204);
+}
+
+.started:hover {
+    background-color: rgb(50, 145, 113);
+}
+
+.settled {
+    background-color: rgb(50, 145, 113);
 }
 
 .player_cards {
@@ -185,7 +191,7 @@
 }
 
 .card {
-    width: 50px;
+    width: 40px;
     float: left;
 }
 
@@ -288,11 +294,12 @@ input.room_name.text {
 
 .position_row, .book_row, .trades_row {
     width: 100%;
-    height: 32px;
-    line-height: 32px;
+    height: 25px;
+    line-height: 25px;
     text-align: center;
     vertical-align: middle;
     overflow: hidden;
+    font-size: small;
 }
 
 .position_row.last {
@@ -395,7 +402,7 @@ input.room_name.text {
 .book {
     float: left;
     padding: 10px;
-    min-width: 33.3%;
+    min-width: 50%;
 }
 
 .trades_instrument {

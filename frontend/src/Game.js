@@ -37,6 +37,7 @@ export class Game extends React.Component {
 			order_instrument: null,
 			order_price: null,
 			order_size: null,
+			pnl: null,
 		}
 	}
 
@@ -100,6 +101,7 @@ export class Game extends React.Component {
 						cards: message.data.cards,
 						status: "started"
 					});
+					console.log(message.data.cards)
 					break;
 				case "RevealedCards":
 					console.log('Received new revealed cards!')
@@ -136,6 +138,13 @@ export class Game extends React.Component {
 					console.log('Received trades')
 					this.setState({trades : message.data});
 					break;
+				case "Settlement":
+					console.log('Settlement received')
+					this.setState({
+						status: "settled",
+						pnl: message.data
+					})
+					break
 				default:
 					console.log(`Unknown message: ${JSON.stringify(message)}`)
 			}
@@ -198,6 +207,13 @@ export class Game extends React.Component {
 		this.state.ws.send("")
 		this.state.ws.send(JSON.stringify({
 			type: "StartGame", data: {room: this.state.current_room}
+		}));
+	}
+
+	handleSettle() {
+		this.state.ws.send("")
+		this.state.ws.send(JSON.stringify({
+			type: "SettleGame", data: {room: this.state.current_room}
 		}));
 	}
 
@@ -300,9 +316,11 @@ export class Game extends React.Component {
 						status={this.state.status}
 						players={this.state.current_players}
 						onStart={this.handleStart.bind(this)}
+						onSettle={this.handleSettle.bind(this)}
 						onRevealCard={this.handleRevealCard.bind(this)}
 						cards={this.state.cards}
 						revealed_cards={this.state.revealed_cards}
+						pnl={this.state.pnl}
 					/>
 				</div>
 				{this.state.status === "none" ?
@@ -636,7 +654,12 @@ class Book extends React.Component {
 
 		return (
 			<div className="book" style={{width: this.props.width ? this.props.width : "100%"}}>
-				<h2>{this.props.instrument}</h2>
+				<div
+					className="book_symbol"
+					onClick={this.props.onQuickSelect.bind(this, this.props.instrument, "", "")}
+				>
+					<h2>{this.props.instrument}</h2>
+				</div>
 				<div className="bids">
 					<div className="book_row heading">
 						<div className="book_order">Orders</div>
@@ -828,6 +851,27 @@ class Room extends React.Component {
 		const players = this.props.players ? this.props.players : [];
 		const n_cards = this.props.cards.length;
 		const revealed_cards = this.props.revealed_cards;
+
+		let button;
+		if (this.props.status === "none") {
+			button = (
+				<div className="game_button start_button" onClick={this.props.onStart}>
+					Start Game
+				</div>
+			)
+		} else if (this.props.status == "started") {
+			button = (
+				<div className="game_button started" onClick={this.props.onSettle}>
+					Settle
+				</div>
+			)
+		} else {
+			button = (
+				<div className="game_button settled">
+					Complete
+				</div>
+			)
+		}
 		return (
 			<div className="curent_room">
 				<div className="label">
@@ -845,10 +889,10 @@ class Room extends React.Component {
 							<div className="player_info" key={p}>
 								{p === this.props.player_name ?
 									<div className="player_name yourself text row" key="name">
-										{p}
+										{p} {this.props.pnl ? `(${this.props.pnl[p]})` : "(?)"}
 									</div> :
 									<div className="player_name text row" key="name">
-										{p}
+										{p} {this.props.pnl ? `(${this.props.pnl[p]})` : "(?)"}
 									</div>
 								}
 								<div className="player_cards text row" key="cards">
@@ -888,16 +932,7 @@ class Room extends React.Component {
 					)}
 				</div>
 				{this.props.room ?
-					this.props.status !== "started" ? 
-						(<div className="start_button" onClick={this.props.onStart}>
-							Start Game
-						</div>
-						) :
-						(<div className="started" onClick={this.props.onStart}>
-							Started
-						</div>
-						) :
-					""
+					button : ""
 				}
 			</div>
 		)
