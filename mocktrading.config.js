@@ -11,7 +11,7 @@ module.exports = {
 		},
 		env_production: {
 			"PRIVATE_HOST" : "172.31.19.134",
-			"PUBLIC_HOST" : "54.252.192.246",
+			"PUBLIC_HOST" : "13.238.145.17",
 			"PORT" : 8887
 		},
 	},
