@@ -108,8 +108,19 @@
     cursor: pointer;
 }
 
+.delete_room {
+    width: 10%;
+    float: left;
+    color: rgb(195, 62, 46);
+}
+
+.delete_room:hover {
+    color: white;
+    background-color: rgb(233, 74, 55);
+}
+
 .room_name {
-    width: 70%;
+    width: 60%;
     float: left;
 }
 

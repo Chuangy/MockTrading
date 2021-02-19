@@ -169,6 +169,12 @@ export class Game extends React.Component {
 		this.state.ws.send(JSON.stringify({type: "NewRoom", data: {name: r}}))
 	}
 
+	handleDeleteRoom(r) {
+		console.log(`Deleting room ${r}`)
+		this.state.ws.send("")
+		this.state.ws.send(JSON.stringify({type: "DeleteRoom", data: {name: r}}))
+	}
+
 	handleJoinRoom(r) {
 		if (this.state.player_name === "no_name") {
 			console.log('Please enter name first...')
@@ -196,6 +202,7 @@ export class Game extends React.Component {
 			positions: [],
 			orders: [],
 			trades: [],
+			pnl: null,
 		});
 		this.state.ws.send("")
 		this.state.ws.send(JSON.stringify({
@@ -307,6 +314,7 @@ export class Game extends React.Component {
 						onJoinRoom={this.handleJoinRoom.bind(this)}
 						onLeaveRoom={this.handleLeaveRoom.bind(this)}
 						onNewRoom={this.handleNewRoom.bind(this)}
+						onDeleteRoom={this.handleDeleteRoom.bind(this)}
 					/>
 				</div>
 				<div className="right_bar">
@@ -538,7 +546,7 @@ class Instruments extends React.Component {
 		return (
 			<div className="instruments_wrapper">
 				<div className="new_instrument">
-					<h1>New Instrument</h1>
+					<h1>Creator</h1>
 					<Form 
 						labelCol={{ span: 8 }}
 						wrapperCol={{ span: 16 }}
@@ -759,8 +767,8 @@ class Player extends React.Component {
 				<div className="player_name_changer">
 					{this.props.player_name === "no_name" ? 
 						<form onSubmit={this.handleSubmit.bind(this)}>
-							<input value={this.state.player_name} onChange={this.handleNameChange.bind(this)}/>
-							<input value={this.state.password} onChange={this.handlePasswordChange.bind(this)}/>
+							<input placeholder={this.state.player_name} onChange={this.handleNameChange.bind(this)}/>
+							<input placeholder={this.state.password} type="password" onChange={this.handlePasswordChange.bind(this)}/>
 							<input type="submit" style={{position: "absolute", left: "-9999px"}}/>
 						</form> :
 						<div className="player_name text">{this.props.player_name}</div>
@@ -960,6 +968,9 @@ class AvailableRooms extends React.Component {
 				{rooms.map((r) => {
 					return (
 						<div className="row" key={r}>
+							<div className="delete_room text" onClick={this.props.onDeleteRoom.bind(this, r)}>
+								-
+							</div>
 							<div className="room_name text" key={r}>{r}</div>
 							{this.props.current_room !== r ? 
 								<div className="button text" 
@@ -977,6 +988,7 @@ class AvailableRooms extends React.Component {
 					)
 				})}
 				<div className="row" key="new_room">
+					<div className="delete_room text"></div>
 					<Input className="room_name text" onChange={this.handleName.bind(this)}/>
 					<div className="button text" onClick={this.props.onNewRoom.bind(this, this.state.new_room_name)}>Create</div>
 				</div>

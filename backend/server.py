@@ -270,7 +270,7 @@ class Lobby:
             return 1
 
     def delete_room(self, name):
-        if name in self._rooms.keys():
+        if name in self._rooms.keys() and self._rooms[name]._status == 'waiting':
             del self._rooms[name]
             return 1
         else:
