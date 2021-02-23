@@ -332,21 +332,12 @@ class Player:
         self._player_id = util.hash_string(name)
         self._rooms = set()
 
-        self._cards = {}                    # Dictionary of cards for each room
-        self._positions = {}                # Dictionary of positions for each room
-        self._orders = {}                   # Dictionary of orders for each room
-
     async def join_room(self, room_name):
         if room_name in self._rooms:
             util.print_core(f'{self._player_name} is already in {room_name}')
             return 0
         else:
             self._rooms.add(room_name)
-
-            self._orders[room_name] = {}
-            self._positions[room_name] = {}
-            self._cards[room_name] = []
-
             await self.send_message({
                 'type' : 'CurrentRoom',
                 'data' : {
@@ -362,8 +353,6 @@ class Player:
     def leave_room(self, room_name):
         if room_name in self._rooms:
             self._rooms.remove(room_name)
-            del self._orders[room_name]
-            del self._positions[room_name]
             util.print_core(f'{self._player_name} has left {room_name}')
             return 1
         return 0
@@ -379,12 +368,6 @@ class Player:
                 await self._ws.send(json.dumps(msg))
         except:
             util.print_core('Could not send!')
-
-    def receive_card(self, room, card):
-        self._cards[room].append(card)
-
-    def get_cards(self, room):
-        return self._cards[room]
 
 class CardDeck:
     def __init__(self):
@@ -410,6 +393,7 @@ class Room:
         self._positions = {}
         
         self._cards = CardDeck()
+        self._player_cards = {}
         self._revealed_cards = {}
         self._n_cards = 3
 
@@ -440,12 +424,8 @@ class Room:
                     'players' : list(self._players.keys())
                 }
             })
-            await player.send_message({
-                'type' : 'GameStart',
-                'data' : {
-                    'cards' : player.get_cards(self._name)
-                }
-            })
+            await self.send_cards()
+            await self.send_revealed_cards()
             await self.send_books()
             await self.send_instruments()
             await self.send_positions()
@@ -478,6 +458,7 @@ class Room:
             return 1
         elif self._status == 'started' and person_name in self._players.keys():
             util.print_core(f'The game has already started but {person_name} has left {self._name}')
+            print (self._players[person_name]._cards)
             return 1
         else:
             return 0
@@ -528,18 +509,13 @@ class Room:
             'type': 'Info', 'status' : f'The game in room {self._name} has begun'
         })
         settlement_value = 0
-        for player_name, player in self._players.items():
+        for player_name, _ in self._players.items():
+            self._player_cards[player_name] = []
             for _ in range(self._n_cards):
                 card = self._cards.deal()
-                player.receive_card(self._name, card)
+                self._player_cards[player_name].append(card)
+                #player.receive_card(self._name, card)
                 settlement_value += card[0]
-
-            await player.send_message({
-                'type' : 'GameStart',
-                'data' : {
-                    'cards' : player.get_cards(self._name)
-                }
-            })
 
             self._positions[player_name] = {}
             self._positions[player_name]['CASH'] = {
@@ -548,6 +524,8 @@ class Room:
             }
         
         self._settlement_value = settlement_value
+        await self.send_cards()
+
         self._status = 'started'
         util.print_core(f'The game has initialised with settlement value {settlement_value}!')
         await self.init_underlying()
@@ -666,6 +644,20 @@ class Room:
         await book.cancel_order(player_name, price, direction)
         await self.send_books()
 
+    async def send_cards(self):
+        for player_name, player in self._players.items():
+            await player.send_message({
+                'type' : 'GameStart',
+                'data' : {
+                    'cards' : self._player_cards[player_name]
+                }
+            })
+
+    async def send_revealed_cards(self):
+        await self.tell_room({
+            'type' : 'RevealedCards',
+            'data' : self._revealed_cards,
+        })
 
     async def send_instruments(self):
         await self.tell_room({
