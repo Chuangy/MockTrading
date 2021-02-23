@@ -136,6 +136,7 @@ export class Game extends React.Component {
 					break;
 				case "Trade":
 					console.log('Received trades')
+					console.log(message.data)
 					this.setState({trades : message.data});
 					break;
 				case "Settlement":
@@ -271,6 +272,22 @@ export class Game extends React.Component {
 		}));
 	}
 
+	handleQuickOrder(instrument, price, size, direction) {
+		console.log(`Sending new order for ${instrument} ${price} ${size} ${direction}`)
+		this.state.ws.send("")
+		this.state.ws.send(JSON.stringify({
+			type: "NewOrder", 
+			data: {
+				room: this.state.current_room,
+				player: this.state.player_name,
+				instrument: instrument,
+				price: price,
+				size: size,
+				direction: direction
+			}
+		}));
+	}
+
 	handleCancelOrder(instrument, price, direction) {
 		console.log(`Cancelling order for ${instrument} ${price} ${direction}`)
 		this.state.ws.send("")
@@ -373,6 +390,7 @@ export class Game extends React.Component {
 							instruments={this.state.instruments}
 							onCancelOrder={this.handleCancelOrder.bind(this)}
 							onQuickSelect={this.handleQuickSelect.bind(this)}
+							onTrade={this.handleQuickOrder.bind(this)}
 						/>
 						<Trades
 							trades={trades}
@@ -403,21 +421,23 @@ class Trades extends React.Component {
 						Size
 					</div>
 				</div>
-				{trades.reverse().map((t) => {
-					return (
-						<div className={`trades_row ${t['direction']}`} key={t['timestamp']}>
-							<div className="trades_instrument">
-								{t['instrument']}
+				<div className="trades_body">
+					{trades.reverse().map((t) => {
+						return (
+							<div className={`trades_row ${t['direction']}`} key={t['timestamp']}>
+								<div className="trades_instrument">
+									{t['instrument']}
+								</div>
+								<div className="trades_price">
+									{t['price']}
+								</div>
+								<div className="trades_size">
+									{t['size']}
+								</div>
 							</div>
-							<div className="trades_price">
-								{t['price']}
-							</div>
-							<div className="trades_size">
-								{t['size']}
-							</div>
-						</div>
-					)
-				})}
+						)
+					})}
+				</div>
 			</div>
 		)
 	}
@@ -582,6 +602,8 @@ class Books extends React.Component {
 		super(props);
 		this.state = {
 			active_instruments : [],
+			mode : 'fast',
+			volume : 0,
 		}
 	}
 
@@ -606,12 +628,27 @@ class Books extends React.Component {
 		this.setState({active_instruments : active_instruments})
 	}
 
+	handleModeChange(e) {
+		this.setState({mode : e.target.value});
+	}
+
 	render() {
 		const active_instruments = this.state.active_instruments;
 		const instruments = this.props.instruments ? this.props.instruments : [];
 		return (
 			<div className="book_wrapper">
 				<h1>Books</h1>
+				<div className="mode_selector">
+					<Radio.Group 
+						optionType="button" 
+						buttonStyle="solid" 
+						value={this.state['mode']} 
+						onChange={this.handleModeChange.bind(this)}
+					>
+						<Radio.Button value="slow">Compact</Radio.Button>
+						<Radio.Button value="fast">Detailed</Radio.Button>
+					</Radio.Group>
+				</div>
 				<div className="instrument_select">
 					{instruments.map((i) => {
 						return (
@@ -636,6 +673,8 @@ class Books extends React.Component {
 							key={i}
 							onCancelOrder={this.props.onCancelOrder.bind(this)}
 							onQuickSelect={this.props.onQuickSelect.bind(this)}
+							onTrade={this.props.onTrade.bind(this)}
+							mode={this.state['mode']}
 						/>
 					)
 				})}
@@ -645,6 +684,16 @@ class Books extends React.Component {
 }
 
 class Book extends React.Component {
+	constructor(props) {
+		super(props);
+		this.state = {
+			volume: 1,
+			min_price: 0,
+			max_price: 100,
+		}
+	}
+
+
 	shouldComponentUpdate(nextProps, nextState) {
 		if (JSON.stringify(nextProps) !== JSON.stringify(this.props)) {
 			return true;
@@ -655,11 +704,10 @@ class Book extends React.Component {
 		return false;
 	}
 
-	render() {
+	get_slow_book() {
 		const asks = this.props.book ? this.props.book['ask'] : {};
 		const bids = this.props.book ? this.props.book['bid'] : {};
 		const orders = this.props.orders ? this.props.orders : {}
-
 		return (
 			<div className="book" style={{width: this.props.width ? this.props.width : "100%"}}>
 				<div
@@ -728,6 +776,125 @@ class Book extends React.Component {
 				</div>
 			</div>
 		)
+	}
+
+	handleParamsChange(changedValues, allValues) {
+		this.setState({...changedValues});
+		console.log(changedValues)
+	}
+
+	get_fast_book() {
+		const asks = this.props.book ? this.props.book['ask'] : {};
+		const bids = this.props.book ? this.props.book['bid'] : {};
+		const orders = this.props.orders ? this.props.orders : {}
+		const top_bid = Math.max(...Object.keys(bids));
+		const top_ask = Math.min(...Object.keys(asks));
+		return (
+			<div className="book" style={{width: this.props.width ? this.props.width : "100%"}}>
+				<div
+					className="book_symbol"
+					onClick={this.props.onQuickSelect.bind(this, this.props.instrument, "", "")}
+				>
+					<h2>{this.props.instrument}</h2>
+				</div>
+				<div className="params_chooser">
+					<Form 
+						labelCol={{ span: 16 }}
+						wrapperCol={{ span: 8 }}
+						labelAlign="right"
+						layout="inline"
+						size="default"
+						onValuesChange={this.handleParamsChange.bind(this)}
+						fields={[
+							{name: "volume", value: this.state.volume},
+							{name: "min_price", value: this.state.min_price},
+							{name: "max_price", value: this.state.max_price}
+						]}
+					>
+						<Form.Item label="Size" name="volume">
+							<InputNumber min={0} precision={0} style={{width: "50px"}}/>
+						</Form.Item>
+						<Form.Item label="L" name="min_price">
+							<InputNumber min={0} precision={0} style={{width: "50px"}}/>
+						</Form.Item>
+						<Form.Item label="H" name="max_price">
+							<InputNumber min={0} precision={0} style={{width: "60px"}}/>
+						</Form.Item>
+					</Form>
+				</div>
+				<div className="book_row heading">
+					<div className="bid_order" key="bid_order">Orders</div>
+					<div className="bid_size" key="bid_size">Size</div>
+					<div className="price" key="price">Price</div>
+					<div className="ask_size" key="ask_size">Size</div>
+					<div className="ask_order" key="ask_order">Orders</div>
+				</div>
+				<div className="prices">
+					{
+						[...Array(this.state.max_price - this.state.min_price).keys()].reverse().map((v) => {
+							const price = v + this.state.min_price;
+							let colour;
+							if (price >= top_ask) {
+								colour = "red";
+							}
+							else if (price <= top_bid) {
+								colour = "green";
+							}
+							else {
+								colour = "grey";
+							}
+
+							return (
+								<div className={`book_row colour_${colour}`} key={price}>
+									{(orders[price] && bids[price]) ?
+										<div 
+											className="bid_order active"
+											onClick={this.props.onCancelOrder.bind(this, this.props.instrument, price, "bid")}
+										>
+											{orders[price]['size']}
+										</div> :
+										<div className="bid_order">-</div>
+									}
+									<div 
+										className={`bid_size bid_size_${colour}`}
+										onClick={this.props.onTrade.bind(this, this.props.instrument, price, this.state.volume, "ask")}
+									>
+										{bids[price] ? bids[price] : "-"}
+									</div>
+									<div className="price" onClick={this.props.onQuickSelect.bind(this, this.props.instrument, price, "")}>
+										{price}
+									</div>
+									<div 
+										className={`ask_size ask_size_${colour}`}
+										onClick={this.props.onTrade.bind(this, this.props.instrument, price, this.state.volume, "bid")}
+									>
+										{asks[price] ? asks[price] : "-"}
+									</div>
+									{(orders[price] && asks[price]) ?
+										<div 
+											className="ask_order active"
+											onClick={this.props.onCancelOrder.bind(this, this.props.instrument, price, "ask")}
+										>
+											{orders[price]['size']}
+										</div> :
+										<div className="ask_order">-</div>
+									}
+								</div>
+							)
+						})
+					}
+				</div>
+			</div>
+		)
+	}
+
+	render() {
+		if (this.props.mode === "slow") {
+			return this.get_slow_book();
+		}
+		else if (this.props.mode === "fast") {
+			return this.get_fast_book();
+		}
 	}
 }
 

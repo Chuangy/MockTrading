@@ -389,6 +389,32 @@ input.room_name.text {
     background-color: rgba(50, 145, 113, 0.1);
 }
 
+.prices {
+    height: 400px;
+    overflow-y: auto;
+}
+
+.bid_order, .bid_size, .price, .ask_size, .ask_order {
+    float: left;
+    width: 20%;
+}
+
+.bid_size_green:hover, .ask_size_red:hover, .bid_size_grey:hover, .bid_order:hover, .ask_order:hover {
+    color: white;
+    background-color: rgb(195, 62, 46);
+    cursor: pointer;
+}
+
+.bid_size_red:hover, .ask_size_green:hover, .ask_size_grey:hover {
+    color: white;
+    background-color: rgb(50, 145, 113);
+    cursor: pointer;
+}
+
+.option {
+    min-width: 25%;
+}
+
 .option.selected:hover {
     background-color:rgb(233, 74, 55);
 }
@@ -444,4 +470,21 @@ input.room_name.text {
 
 h2 {
     padding-top: 50px;
+}
+
+.colour_green {
+    background-color: rgba(50, 145, 113, 0.1);
+}
+
+.colour_red {
+    background-color: rgba(195, 62, 46, 0.1);
+}
+
+.trades_body {
+    height: 90%;
+    overflow-y: auto;
+}
+
+.mode_selector, .params_chooser {
+    margin-bottom: 20px;
 }
