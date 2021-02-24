@@ -805,7 +805,7 @@ class Book extends React.Component {
 					className="book_symbol"
 					onClick={this.props.onQuickSelect.bind(this, this.props.instrument, "", "")}
 				>
-					<h2>{this.props.instrument}</h2>
+					<h2>{`${this.props.instrument} (${top_bid === -Infinity ? "None" : top_bid} - ${top_ask  === Infinity ? "None" : top_ask})`}</h2>
 				</div>
 				<div className="params_chooser">
 					<Form 
