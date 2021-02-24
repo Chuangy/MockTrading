@@ -138,7 +138,7 @@ export class Game extends React.Component {
 				case "Trade":
 					console.log('Received trades')
 					console.log(message.data)
-					this.setState({trades : message.data});
+					this.setState({trades : message.data.reverse()});
 					break;
 				case "Settlement":
 					console.log('Settlement received')
@@ -423,7 +423,7 @@ class Trades extends React.Component {
 					</div>
 				</div>
 				<div className="trades_body">
-					{trades.reverse().map((t) => {
+					{trades.map((t) => {
 						return (
 							<div className={`trades_row ${t['direction']}`} key={t['timestamp']}>
 								<div className="trades_instrument">
@@ -508,10 +508,6 @@ class NewOrders extends React.Component {
 }
 
 class Positions extends React.Component {
-	constructor(props) {
-		super(props);
-	}
-
 	render() {
 		const n_instruments = this.props.instruments.length;
 		return (
@@ -1029,10 +1025,6 @@ class Card extends React.Component {
 }
 
 class Room extends React.Component {
-	constructor(props) {
-		super(props);
-	}
-
 	shouldComponentUpdate(nextProps) {
 		if (JSON.stringify(nextProps) !== JSON.stringify(this.props)) {
 			return true;
@@ -1052,7 +1044,7 @@ class Room extends React.Component {
 					Start Game
 				</div>
 			)
-		} else if (this.props.status == "started") {
+		} else if (this.props.status === "started") {
 			button = (
 				<div className="game_button started" onClick={this.props.onSettle}>
 					Settle
@@ -1223,10 +1215,6 @@ class AvailableRooms extends React.Component {
 }
 
 class Lobby extends React.Component {
-	constructor(props) {
-		super(props);
-	}
-
 	shouldComponentUpdate(nextProps) {
 		if (JSON.stringify(nextProps) !== JSON.stringify(this.props)) {
 			return true;
