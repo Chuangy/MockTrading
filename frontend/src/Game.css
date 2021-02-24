@@ -219,7 +219,12 @@
     background-color: rgb(0, 122, 204);
 }
 .revealed {
-    background-color: rgb(50, 145, 113);
+    color: rgb(50, 145, 113);
+}
+
+.revealed:hover {
+    color: white;
+    background-color: rgb(40, 40, 40);
 }
 
 .player_name_changer input {
@@ -479,7 +484,7 @@ h2 {
 .colour_red {
     background-color: rgba(195, 62, 46, 0.1);
 }
-
+ 
 .trades_body {
     height: 90%;
     overflow-y: auto;
@@ -487,4 +492,8 @@ h2 {
 
 .mode_selector, .params_chooser {
     margin-bottom: 20px;
+}
+
+.height_input {
+    margin-left: 50px;
 }

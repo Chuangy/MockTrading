@@ -397,10 +397,7 @@ class Room:
         self._revealed_cards = {}
         self._n_cards = 3
 
-        self._settlement_value = None
-
-        self._underlying = {}
-        self._options = {}
+        self._settlement_value = {}
     
     async def tell_room(self, msg):
         for _, player in self._players.items():
@@ -458,7 +455,6 @@ class Room:
             return 1
         elif self._status == 'started' and person_name in self._players.keys():
             util.print_core(f'The game has already started but {person_name} has left {self._name}')
-            print (self._players[person_name]._cards)
             return 1
         else:
             return 0
@@ -508,14 +504,17 @@ class Room:
         await self.tell_room({
             'type': 'Info', 'status' : f'The game in room {self._name} has begun'
         })
-        settlement_value = 0
+        self._settlement_value = {'A': 0, 'B': 0}
         for player_name, _ in self._players.items():
-            self._player_cards[player_name] = []
+            self._player_cards[player_name] = {
+                'A': [],
+                'B': []
+            }
             for _ in range(self._n_cards):
-                card = self._cards.deal()
-                self._player_cards[player_name].append(card)
-                #player.receive_card(self._name, card)
-                settlement_value += card[0]
+                for s in ('A', 'B'):
+                    card = self._cards.deal()
+                    self._player_cards[player_name][s].append(card)
+                    self._settlement_value[s] += card[0]
 
             self._positions[player_name] = {}
             self._positions[player_name]['CASH'] = {
@@ -523,26 +522,31 @@ class Room:
                 'average_price' : 1
             }
         
-        self._settlement_value = settlement_value
         await self.send_cards()
 
         self._status = 'started'
-        util.print_core(f'The game has initialised with settlement value {settlement_value}!')
+        util.print_core(f'The game has initialised with settlement value {self._settlement_value}!')
         await self.init_underlying()
 
     def get_value(self, symbol):
-        if symbol == 'SUM':
-            return self._settlement_value
+        if symbol == 'A':
+            return self._settlement_value['A']
+        elif symbol == 'B':
+            return self._settlement_value['B']
+        elif symbol == 'A - B':
+            return self._settlement_value['A'] - self._settlement_value['B']
+        elif symbol == 'B - A':
+            return self._settlement_value['B'] - self._settlement_value['A']
         elif symbol == 'CASH':
             return 1
         else:
-            strike, option_type = symbol.split('-')
+            underlying, strike, option_type = symbol.split('-')
             if option_type == 'CALL':
-                v = max(0, self._settlement_value - int(strike))
-                util.print_core(f'SUM:{self._settlement_value} {strike}-CALL: {v}')
+                v = max(0, self._settlement_value[underlying] - int(strike))
+                util.print_core(f'SUM:{self._settlement_value[underlying]} {underlying}-{strike}-CALL: {v}')
                 return v
             elif option_type == 'PUT':
-                return max(0, int(strike) - self._settlement_value)
+                return max(0, int(strike) - self._settlement_value[underlying])
             else:
                 util.print_core(f'Unknown symbol: {symbol}')
 
@@ -552,6 +556,9 @@ class Room:
             pnl[player_name] = 0
             for symbol, details in self._positions[player_name].items():
                 pnl[player_name] += details['size'] * self.get_value(symbol)
+        values = {i:self.get_value(i) for i in self._instruments}
+        util.print_core(f'The game settled with values: {values}')
+        util.print_core(f'The pnl is: {pnl}')
         self._status = 'settled'
         await self.tell_room({
             'type' : 'Settlement',
@@ -560,10 +567,19 @@ class Room:
 
     async def reveal_card(self, player_name, card):
         if player_name in self._revealed_cards.keys():
-            if card not in self._revealed_cards[player_name]:
-                self._revealed_cards[player_name].append(card)
+            if card in self._player_cards[player_name]['A'] and card not in self._revealed_cards[player_name]['A']:
+                self._revealed_cards[player_name]['A'].append(card)
+            elif card in self._player_cards[player_name]['B'] and card not in self._revealed_cards[player_name]['B']:
+                self._revealed_cards[player_name]['B'].append(card)
         else:
-            self._revealed_cards[player_name] = [card]
+            self._revealed_cards[player_name] = {
+                'A': [],
+                'B': []
+            }
+            if card in self._player_cards[player_name]['A']:
+                self._revealed_cards[player_name]['A'].append(card)
+            elif card in self._player_cards[player_name]['B']:
+                self._revealed_cards[player_name]['B'].append(card)
         await self.tell_room({
             'type' : 'RevealedCards',
             'data' : self._revealed_cards,
@@ -571,32 +587,27 @@ class Room:
         util.print_core(f'Revealing cards {self._revealed_cards}')
 
     async def init_underlying(self):
-        name = 'SUM'
-        util.print_core(f'The instrument, {name} has been initialised!')
-        self._underlying = {
-            'type' : 'underlying',
-            'settlement_price' : self._settlement_value,
-            'last_price' : None
-        }
-        self._instruments.append(name)
-        self._books[name] = book.OrderBook(name, 1)
-        await self.send_instruments()
-        for player_name in self._players.keys():
-            self._positions[player_name][name] = {
-                'size' : 0,
-                'average_price' : 0,
-            }
+        if self._settlement_value['A'] >= self._settlement_value['B']:
+            spread = 'A - B'
+        else:
+            spread = 'B - A'
+        for s in ('A', 'B', spread):
+            name = s
+            util.print_core(f'The instrument, {name} has been initialised!')
+            self._instruments.append(name)
+            self._books[name] = book.OrderBook(name, 1)
+            await self.send_instruments()
+            for player_name in self._players.keys():
+                self._positions[player_name][name] = {
+                    'size' : 0,
+                    'average_price' : 0,
+                }
         await self.send_positions()
 
     async def new_option(self, name, option_type, strike):
         if strike is not None and strike > 0:
             if name not in self._instruments:
                 util.print_core(f'The option, {name} has been initialised!')
-                self._options[name] = {
-                    'type' : option_type,
-                    'settlement_price' : strike,
-                    'last_price' : None,
-                }
                 self._instruments.append(name)
                 self._books[name] = book.OrderBook(name, 1)
                 await self.send_instruments()

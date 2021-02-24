@@ -27,8 +27,8 @@ export class Game extends React.Component {
 			players: [],
 			player_name: "no_name",
 			status: "none",
-			cards: [],
-			revealed_cards: {},
+			cards: {"A": [], "B": []},
+			revealed_cards: {"A": [], "B": []},
 			instruments: [],
 			books: new Orderbook(),
 			positions: [],
@@ -105,6 +105,7 @@ export class Game extends React.Component {
 					break;
 				case "RevealedCards":
 					console.log('Received new revealed cards!')
+					console.log(message.data)
 					this.setState({
 						revealed_cards: message.data,
 					});
@@ -195,8 +196,8 @@ export class Game extends React.Component {
 		this.setState({
 			current_room: null,
 			current_players: [],
-			cards: [],
-			revealed_cards: {},
+			cards: {"A": [], "B": []},
+			revealed_cards: {"A": [], "B": []},
 			status: "none",
 			instruments: [],
 			books: new Orderbook(),
@@ -406,7 +407,6 @@ export class Game extends React.Component {
 class Trades extends React.Component {
 	render() {
 		const trades = this.props.trades ? this.props.trades : [];
-		console.log(trades)
 		return (
 			<div className="trade_wrapper">
 				<h1>Trades</h1>
@@ -555,6 +555,7 @@ class Instruments extends React.Component {
 		this.state = {
 			new_instrument_type: "call",
 			new_instrument_strike: null,
+			underlying: "A",
 		}
 	}
 
@@ -563,7 +564,7 @@ class Instruments extends React.Component {
 	} 
 
 	render() {
-		const new_instrument_name = `${this.state.new_instrument_strike}-${this.state.new_instrument_type.toUpperCase()}`
+		const new_instrument_name = `${this.state.underlying}-${this.state.new_instrument_strike}-${this.state.new_instrument_type.toUpperCase()}`
 		return (
 			<div className="instruments_wrapper">
 				<div className="new_instrument">
@@ -575,12 +576,18 @@ class Instruments extends React.Component {
 						layout="horizontal"
 						size="default"
 						onValuesChange={this.handleValueChange.bind(this)}
-						initialValues={{new_instrument_type: this.state.new_instrument_type}}
+						initialValues={{new_instrument_type: this.state.new_instrument_type, underlying: this.state.underlying}}
 					>
-						<Form.Item label="Instrument type" name="new_instrument_type">
+						<Form.Item label="Type" name="new_instrument_type">
 							<Radio.Group optionType="button" buttonStyle="solid" >
 								<Radio.Button value="call">Call</Radio.Button>
 								<Radio.Button value="put">Put</Radio.Button>
+							</Radio.Group>
+						</Form.Item>
+						<Form.Item label="Underlying" name="underlying">
+							<Radio.Group optionType="button" buttonStyle="solid" >
+								<Radio.Button value="A">A</Radio.Button>
+								<Radio.Button value="B">B</Radio.Button>
 							</Radio.Group>
 						</Form.Item>
 						<Form.Item label="Strike" name="new_instrument_strike">
@@ -604,7 +611,7 @@ class Books extends React.Component {
 		this.state = {
 			active_instruments : [],
 			mode : 'fast',
-			volume : 0,
+			height : 400,
 		}
 	}
 
@@ -633,6 +640,10 @@ class Books extends React.Component {
 		this.setState({mode : e.target.value});
 	}
 
+	handleHeightChange(v) {
+		this.setState({height: v});
+	}
+
 	render() {
 		const active_instruments = this.state.active_instruments;
 		const instruments = this.props.instruments ? this.props.instruments : [];
@@ -643,12 +654,13 @@ class Books extends React.Component {
 					<Radio.Group 
 						optionType="button" 
 						buttonStyle="solid" 
-						value={this.state['mode']} 
+						value={this.state.mode} 
 						onChange={this.handleModeChange.bind(this)}
 					>
 						<Radio.Button value="slow">Compact</Radio.Button>
 						<Radio.Button value="fast">Detailed</Radio.Button>
 					</Radio.Group>
+					<InputNumber className="height_input" onChange={this.handleHeightChange.bind(this)} min={200} defaultValue={this.state.height}/>
 				</div>
 				<div className="instrument_select">
 					{instruments.map((i) => {
@@ -675,7 +687,8 @@ class Books extends React.Component {
 							onCancelOrder={this.props.onCancelOrder.bind(this)}
 							onQuickSelect={this.props.onQuickSelect.bind(this)}
 							onTrade={this.props.onTrade.bind(this)}
-							mode={this.state['mode']}
+							mode={this.state.mode}
+							height={this.state.height}
 						/>
 					)
 				})}
@@ -830,7 +843,7 @@ class Book extends React.Component {
 					<div className="ask_size" key="ask_size">Size</div>
 					<div className="ask_order" key="ask_order">Orders</div>
 				</div>
-				<div className="prices">
+				<div className="prices" style={{height: `${this.props.height}px`}}>
 					{
 						[...Array(this.state.max_price - this.state.min_price).keys()].reverse().map((v) => {
 							const price = v + this.state.min_price;
@@ -986,14 +999,18 @@ class Card extends React.Component {
 	render() {
 		const number = this.props.data[0];
 		const suit = this.props.data[1];
-		
 		const revealed_cards = (
 			this.props.revealed_cards ? 
-				Object.values(this.props.revealed_cards).flat() :
+				[
+					...Object.values(this.props.revealed_cards).flat().map((v) => {return v["A"]}),
+					...Object.values(this.props.revealed_cards).flat().map((v) => {return v["B"]})
+				] :
 				[]
-		).map((a) => {
+		).flat().map((a) => {
 			return JSON.stringify(a)
 		});
+		console.log(revealed_cards)
+		console.log(this.props.revealed_cards ? Object.values(this.props.revealed_cards).flat(): "")
 		const colour = revealed_cards.includes(JSON.stringify([number, suit])) ? 
 			"revealed" : "unrevealed";
 		
@@ -1025,7 +1042,7 @@ class Room extends React.Component {
 
 	render() {
 		const players = this.props.players ? this.props.players : [];
-		const n_cards = this.props.cards.length;
+		const n_cards = this.props.cards["A"].length;
 		const revealed_cards = this.props.revealed_cards;
 
 		let button;
@@ -1060,7 +1077,8 @@ class Room extends React.Component {
 						}
 						return [...acc, element];
 					}, []).map((p) => {
-						let n_revealed_cards = 0;
+						let n_revealed_cards_a = 0;
+						let n_revealed_cards_b = 0;
 						return (
 							<div className="player_info" key={p}>
 								{p === this.props.player_name ?
@@ -1071,10 +1089,11 @@ class Room extends React.Component {
 										{p} {this.props.pnl ? `(${this.props.pnl[p]})` : "(?)"}
 									</div>
 								}
-								<div className="player_cards text row" key="cards">
+								<div className="player_cards text row" key="cards_a">
 									{p === this.props.player_name ?
 										<div className="card_display">
-											{this.props.cards.map((c) => 
+											<div style={{float: "left", width: "30px", color: "orange"}}>(A)</div>
+											{this.props.cards["A"].map((c) => 
 												<Card 
 													data={c} 
 													onRevealCard={this.props.onRevealCard} 
@@ -1084,19 +1103,57 @@ class Room extends React.Component {
 											)}
 										</div> :
 										<div className="card_display">
-											{revealed_cards[p] ? revealed_cards[p].map((c) => {
-												n_revealed_cards += 1;
+											<div style={{float: "left", width: "30px", color: "orange"}}>(A)</div>
+											{revealed_cards[p] ? revealed_cards[p]["A"].map((c) => {
+												n_revealed_cards_a += 1;
 												return <Card 
 													data={c} 
 													onRevealCard={console.log} 
 													key={c}
+													revealed_cards={this.props.revealed_cards}
 												/>
 											}) : ""}
-											{[...Array(n_cards - n_revealed_cards).keys()].map((v) => 
+											{[...Array(n_cards - n_revealed_cards_a).keys()].map((v) => 
 												<Card 
 													data={["?", "?"]} 
 													onRevealCard={console.log} 
 													key={v}
+													revealed_cards={this.props.revealed_cards}
+												/>)
+											}
+										</div>
+									}
+								</div>
+								<div className="player_cards text row" key="cards_b">
+									{p === this.props.player_name ?
+										<div className="card_display">
+											<div style={{float: "left", width: "30px", color: "orange"}}>(B)</div>
+											{this.props.cards["B"].map((c) => 
+												<Card 
+													data={c} 
+													onRevealCard={this.props.onRevealCard} 
+													key={c}
+													revealed_cards={this.props.revealed_cards}
+												/>
+											)}
+										</div> :
+										<div className="card_display">
+											<div style={{float: "left", width: "30px", color: "orange"}}>(B)</div>
+											{revealed_cards[p] ? revealed_cards[p]["B"].map((c) => {
+												n_revealed_cards_b += 1;
+												return <Card 
+													data={c} 
+													onRevealCard={console.log} 
+													key={c}
+													revealed_cards={this.props.revealed_cards}
+												/>
+											}) : ""}
+											{[...Array(n_cards - n_revealed_cards_b).keys()].map((v) => 
+												<Card 
+													data={["?", "?"]} 
+													onRevealCard={console.log} 
+													key={v}
+													revealed_cards={this.props.revealed_cards}
 												/>)
 											}
 										</div>
