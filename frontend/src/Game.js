@@ -405,7 +405,8 @@ export class Game extends React.Component {
 
 class Trades extends React.Component {
 	render() {
-		const trades = this.props.trades ? Object.values(this.props.trades).flat() : [];
+		const trades = this.props.trades ? this.props.trades : [];
+		console.log(trades)
 		return (
 			<div className="trade_wrapper">
 				<h1>Trades</h1>

@@ -389,7 +389,7 @@ class Room:
 
         self._instruments = []              # Instruments
         self._books = {}                    # A book of open orders for each instrument
-        self._trades = {}                   # A list of trades for each user
+        self._trades = []                   # A list of trades for each user
         self._positions = {}
         
         self._cards = CardDeck()
@@ -487,7 +487,7 @@ class Room:
         await self.send_positions(specific_player=player_name)
 
     async def new_trade(self, instrument_name, price, size, direction):
-        self._trades[instrument_name].append({
+        self._trades.append({
             'price' : price,
             'size' : size,
             'direction' : direction,
@@ -586,7 +586,6 @@ class Room:
                 'size' : 0,
                 'average_price' : 0,
             }
-            self._trades[name] = []
         await self.send_positions()
 
     async def new_option(self, name, option_type, strike):
@@ -606,7 +605,6 @@ class Room:
                         'size' : 0,
                         'average_price' : 0,
                     }
-                    self._trades[name] = []
 
                 await self.send_positions()
             else:
