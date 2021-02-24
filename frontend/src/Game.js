@@ -867,7 +867,7 @@ class Book extends React.Component {
 									}
 									<div 
 										className={`bid_size bid_size_${colour}`}
-										onClick={this.props.onTrade.bind(this, this.props.instrument, price, this.state.volume, "ask")}
+										onClick={this.props.onTrade.bind(this, this.props.instrument, price, this.state.volume, "bid")}
 									>
 										{bids[price] ? bids[price] : "-"}
 									</div>
@@ -876,7 +876,7 @@ class Book extends React.Component {
 									</div>
 									<div 
 										className={`ask_size ask_size_${colour}`}
-										onClick={this.props.onTrade.bind(this, this.props.instrument, price, this.state.volume, "bid")}
+										onClick={this.props.onTrade.bind(this, this.props.instrument, price, this.state.volume, "ask")}
 									>
 										{asks[price] ? asks[price] : "-"}
 									</div>
